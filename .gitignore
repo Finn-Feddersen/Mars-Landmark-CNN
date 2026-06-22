@@ -1,3 +1,17 @@
-.venv
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# OS files
+.DS_Store
+
+# Generated/augmented data artifacts
 ADASYN_train_augmented.csv
 OVER_train_augmented.csv
+*_train_augmented.csv

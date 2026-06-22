@@ -1,0 +1,18 @@
+# Core
+numpy
+pandas
+matplotlib
+seaborn
+
+# Image I/O
+opencv-python
+
+# Classical ML + imbalance handling
+scikit-learn
+imbalanced-learn
+
+# Deep learning (CNNs)
+tensorflow
+
+# Notebook environment
+jupyterlab
