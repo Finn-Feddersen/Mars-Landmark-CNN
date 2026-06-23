@@ -1,8 +1,14 @@
 # Mars Surface Image Classification
 
-Classifying geological landmarks on the surface of Mars from NASA HiRISE orbital imagery, using classical machine learning (SVM) and deep convolutional neural networks (AlexNet and GoogLeNet), with a focus on handling **severe class imbalance**.
+Classifying geological landmarks on the surface of Mars from NASA HiRISE orbital imagery — and using it to answer a sharper question: **does handling class imbalance actually improve a CNN's performance?**
 
-This was a university group project. It compares oversampling strategies (Random Oversampling vs. ADASYN) and two CNN architectures on a real, heavily imbalanced remote-sensing dataset.
+Developed as the final examination paper for the *Data Mining, Machine Learning, and Deep Learning* course (M.Sc. Business Administration & Data Science, Copenhagen Business School, 2023). The study benchmarks an SVM against two CNN architectures (AlexNet and GoogLeNet) and tests three hypotheses:
+
+1. Neural networks classify these images better than an SVM.
+2. A balanced training set yields better results than an imbalanced one.
+3. ADASYN and Random Oversampling are suitable ways to balance image data for CNNs.
+
+**Headline finding:** (1) holds emphatically; (2) and (3) do **not** — oversampling (ADASYN / Random Oversampling) gave no meaningful gain over training on the imbalanced data. The decisive factor was architecture: GoogLeNet beat AlexNet across the board.
 
 ## Problem
 
@@ -15,7 +21,11 @@ The [HiRISE](https://www.uahirise.org/) camera aboard NASA's Mars Reconnaissance
 | 2 | dark dune | 6 | swiss cheese |
 | 3 | slope streak | 7 | spider |
 
+![Example tiles for each of the 8 HiRISE landmark classes](docs/class_samples.png)
+
 The central challenge is **extreme class imbalance**: of the 10,815 image tiles, ~81% belong to class `other`, while rare classes such as `impact ejecta` have fewer than 75 examples.
+
+![Class distribution showing severe imbalance](docs/class_distribution.png)
 
 ## Dataset
 
@@ -32,8 +42,8 @@ The data is the publicly released NASA JPL *Mars orbital image (HiRISE) labeled 
 
 ### Preprocessing & splitting
 - Images loaded as grayscale, resized to **227×227**, normalized to `[0, 1]`.
-- Stratified **60% train / 10% validation / 30% test** split.
-- ~4,500 majority-class (`other`) training samples removed to reduce the imbalance before resampling.
+- Stratified split: **60% train / 28% test / 12% validation** (6,489 / 3,028 / 1,298 images).
+- ~4,500 majority-class (`other`) training samples removed to reduce the imbalance before resampling (final training set: 1,989 images).
 
 ### Handling class imbalance
 Two oversampling strategies (from [`imbalanced-learn`](https://imbalanced-learn.org/)) are compared, each rebalancing every minority class up to the majority count:
@@ -41,6 +51,8 @@ Two oversampling strategies (from [`imbalanced-learn`](https://imbalanced-learn.
 - **ADASYN** — synthesizes new minority samples adaptively in feature-dense regions.
 
 A 7-fold image **augmentation** (rotations 90/180/270°, horizontal/vertical flips, zoom) is then applied to the training set only.
+
+![Augmentation pipeline: original tile plus rotations, flips, and zoom](docs/augmentation_pipeline.png)
 
 ### Models
 | Model | Library | Notes |
@@ -60,7 +72,9 @@ Test-set accuracy (3,028 images) for the final 30-epoch CNN runs:
 | **AlexNet**   | 0.88 | 0.80 | 0.82 |
 | **GoogLeNet** | 0.89 | 0.86 | 0.85 |
 
-> ⚠️ **Read these numbers carefully.** Because ~37% of the test set is the majority `other` class, raw accuracy is misleading — the "Imbalanced" models score highest simply by favoring the majority class. The oversampled (Random/ADASYN) models trade a few points of overall accuracy for substantially better **per-class recall on rare landmarks**, which is the metric that actually matters here. Per-class precision/recall/F1 and confusion matrices for every configuration are in the result notebooks.
+> ⚠️ **Read these numbers carefully.** The test set is left at its natural distribution, so **~82% of it is the majority `other` class** — a model could score 0.82 by always predicting `other`. Raw accuracy is therefore misleading; the fair yardstick is **macro-F1** (which weights all 8 classes equally). On that measure the honest result is that **oversampling did not help here**: macro-F1 was essentially flat across imbalanced / Random Oversampling / ADASYN (~0.69–0.70), and the three balancing variants were statistically indistinguishable. The decisive factor was **architecture** — GoogLeNet (macro-F1 ≈0.70) beat AlexNet (≈0.63) in every configuration, with the plain imbalanced GoogLeNet nominally highest (accuracy 0.89, macro-F1 0.70). Full per-class precision/recall/F1 is in the report's Table 3.
+
+> *Note: the classification reports inside the notebooks have precision and recall swapped (a known variable-ordering bug, flagged in the report); the corrected figures live in the report. Macro-F1 is unaffected by the swap.*
 
 The CNNs vastly outperform the SVM baseline, whose test accuracy collapsed on the rare classes (≈0.18 on balanced training) — illustrating why deep features are needed for this task.
 
@@ -97,11 +111,13 @@ pip install -r requirements.txt
 jupyter lab
 ```
 
-Training the CNNs requires a GPU and several hours; the committed notebooks already contain their outputs (metrics, plots, confusion matrices) so the results are viewable without re-running.
+Training the CNNs requires a GPU and several hours (GoogLeNet runs took ~9–10 h); the committed notebooks already contain their outputs (metrics, training curves, sample plots) so the results are viewable without re-running.
 
-## Team
+## Team & report
 
-Developed as a group project by **Finn Feddersen**, **Leonard Brenk** ([@leobreo](https://github.com/leobreo)), and [@felix1102](https://github.com/felix1102).
+Final examination paper for the M.Sc. *Business Administration and Data Science* programme at Copenhagen Business School (2023), by **Leonard Brenk**, **Finn Feddersen**, and **Felix Wltschek** (supervisors: Somnath Mazumdar, Raghava Rao Mukkamala).
+
+📄 The full 13-page report is available on request — [feddersen-net.com](https://feddersen-net.com).
 
 ## Acknowledgements
 
